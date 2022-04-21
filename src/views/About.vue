@@ -1,24 +1,26 @@
 <template>
   <div class="wrap">
     <div class="bg-cover banner">
+      <!-- <div class="video full-size bg-cover" style="background-image:url('https://images.unsplash.com/photo-1558637845-c8b7ead71a3e?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1332&q=80')">
+      </div> -->
+      <img v-show="isLoading" class="loading" src="~@/assets/load.gif" alt="">
       <div v-show="showImage" class="video full-size bg-cover" :style="{backgroundImage:'url(' +image+ ')'}"></div>
       <div class="video" v-show="!showImage">
-        <iframe class="full-size d-block" :src="video" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+        <YoutubeVue3 ref="youtube" :videoid="video" :width="width" :height="height"
+          @ended="onEnded" @paused="onPaused" @played="onPlayed"/>
       </div>
 
-      <a class="top-1 d-block" target="_blank" href="https://osensetech.com/"></a>
-      <a class="top-2 d-block" target="_blank" href="https://osensetech.com/"></a>
-      <a class="top-3 d-block" target="_blank" href="https://osensetech.com/"></a>
-      <a class="top-4 d-block" target="_blank" href="https://osensetech.com/"></a>
+      <a id="C--top-center-1" class="top-1 d-block smart-city-web-btn" target="_blank" href="https://www.oexpo.io/vb/61f35acfb62f2dec9646b5c8"></a>
+      <a id="C--top-center-2" class="top-2 d-block smart-city-web-btn" target="_blank" href="https://smartcityonline.org.tw/pavilion.php?vip=secom"></a>
+      <a id="C--top-center-3" class="top-3 d-block smart-city-web-btn" target="_blank" href="https://www.kymco.com.tw/"></a>
+      <a id="C--top-center-4" class="top-4 d-block smart-city-web-btn" target="_blank" href="https://www.oexpo.io/vb/61f35acfb62f2dec9646b5c6"></a>
 
-      <a class="rect-1 d-block" target="_blank" href="https://osensetech.com/"></a>
-      <a class="left-1 d-block"  target="_blank" href="https://osensetech.com/"></a>
-      <a class="left-2 d-block"  target="_blank" href="https://osensetech.com/"></a>
-      <a class="left-3 d-block"  target="_blank" href="https://osensetech.com/"></a>
-      <a class="left-4 d-block"  target="_blank" href="https://osensetech.com/"></a>
-      <a class="rect-2 d-block" target="_blank" href="https://osensetech.com/"></a>
+      <a id="C--mid-center-1" class="left-1 d-block smart-city-web-btn"  target="_blank" href="https://smartcityonline.org.tw/pavilion.php?vip=cht"></a>
+      <a id="C--mid-center-2" class="left-2 d-block smart-city-web-btn"  target="_blank" href="https://smartcityonline.org.tw/pavilion.php?vip=kaohsiung"></a>
+      <a id="C--mid-center-3" class="left-3 d-block smart-city-web-btn"  target="_blank" href="https://smartcityonline.org.tw/pavilion.php?vip=taipei"></a>
+      <a id="C--mid-center-4" class="left-4 d-block smart-city-web-btn"  target="_blank" href="https://smartcityonline.org.tw/pavilion.php?vip=fet"></a>
 
-      <a class="bottom d-block" target="_blank" href="https://osensetech.com/"></a>
+      <a id="C--connect-exhibition-area" class="bottom d-block smart-city-web-btn" target="_blank" href="https://www.oexpo.io/vb/61f35acfb62f2dec9646b5ca"></a>
 
     </div>
   </div>
@@ -26,10 +28,25 @@
 
 <script>
 import { connectSocket } from '@/webSocket/webSocket'
+import YoutubeVue3 from '@/components/YoutubeVue3.vue'
 export default {
+  components: {
+    YoutubeVue3
+  },
   data () {
     return {
-      showImage: false
+      showImage: false,
+      isLoading: true
+    }
+  },
+  props: {
+    width: {
+      type: String,
+      default: '100%'
+    },
+    height: {
+      type: String,
+      default: '100%'
     }
   },
   computed: {
@@ -42,21 +59,40 @@ export default {
   },
   watch: {
     image () {
-      this.showImage = true
-      console.log('watch image', this.showImage, this.image)
+      if (this.image) {
+        this.showImage = true
+        this.isLoading = false
+        // console.log('watch, image', this.image, this.showImage)
+      }
     },
     video () {
-      this.showImage = false
-      console.log('watch video', this.showImage, this.video)
+      if (this.video) {
+        this.showImage = false
+        this.isLoading = false
+        // console.log('watch,video', this.video, !this.showImage)
+      }
+    }
+  },
+  methods: {
+    onPlayed () {
+      console.log('## OnPlayed')
+    },
+    onEnded () {
+      console.log('## OnEnded')
+      this.$refs.youtube.player.seekTo(0)
+    },
+    onPaused () {
+      console.log('## OnPaused')
     }
   },
   mounted () {
-    this.$http.get(`http://20.106.156.149:8080/template/${this.$route.query.uuid}`)
+    this.$http.get(`${process.env.VUE_APP_URL}/template/${this.$route.query.uuid}`)
       .then(res => {
         // console.log(res)
         connectSocket(res.data.uuid)
+        this.$refs.youtube.player.mute()
       })
-    console.log(this.$route.query.uuid)
+    // console.log(process.env.VUE_APP_GTM)
   }
 }
 </script>
@@ -77,15 +113,15 @@ export default {
   display: block;
 }
 .banner{
-  background-image: url('~@/assets/banner.png');
+  background-image: url('~@/assets/智慧程式展_web_confirm.png');
   padding-top: 56.25%;
   .top-1{
-    background-color: green;
+    // background-color: green;
     position: absolute;
     top: 8%;
     left: 10%;
-    width: 7.5%;
-    height: 27%;
+    width: 8%;
+    height: 20%;
   }
   .top-2{
     // background-color: green;
@@ -98,7 +134,7 @@ export default {
     height: 13.5%;
   }
   .top-3{
-    background-color: green;
+    // background-color: green;
     position: absolute;
     transform-style:  preserve-3d;
     transform:rotate(15deg);
@@ -108,14 +144,14 @@ export default {
     height: 13.5%;
   }
   .top-4{
-    background-color: green;
+    // background-color: green;
     position: absolute;
     transform-style:  preserve-3d;
     transform: rotate(-1.5deg);
     top: 8%;
     right: 15.5%;
-    width: 7.5%;
-    height: 27%;
+    width: 8%;
+    height: 20%;
   }
   .rect-1{
     // background-color: red;
@@ -126,7 +162,7 @@ export default {
     height: 28.5%;
   }
   .left-1{
-    background-color: orange;
+    // background-color: orange;
     position: absolute;
     top: 50%;
     left: 6%;
@@ -135,7 +171,7 @@ export default {
     height: 12%;
   }
   .left-2{
-    background-color: orange;
+    // background-color: orange;
     position: absolute;
     top: 50%;
     left: 20.5%;
@@ -144,7 +180,7 @@ export default {
     height: 12%;
   }
   .left-3{
-    background-color: yellow;
+    // background-color: yellow;
     position: absolute;
     top: 50%;
     right: 21%;
@@ -153,7 +189,7 @@ export default {
     height: 12%;
   }
   .left-4{
-    background-color: yellow;
+    // background-color: yellow;
     position: absolute;
     top: 50%;
     right: 6.5%;
@@ -171,10 +207,10 @@ export default {
   }
   .video{
     position: absolute;
-    top:30%;
+    top: 31.3%;
     left: 36.15%;
     width: 27%;
-    height: 28%;
+    height: 27%;
   }
   .bottom{
     // background-color: skyblue;
@@ -184,6 +220,18 @@ export default {
     right: 20%;
     width: 69.5%;
     height: 19%;
+  }
+}
+.loading{
+  width: 40px;
+  height: 40px;
+  position: absolute;
+  top: 45%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  @media(max-width:560px) {
+    width: 20px;
+    height: 20px;
   }
 }
 
